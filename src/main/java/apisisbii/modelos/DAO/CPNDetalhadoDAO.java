@@ -31,7 +31,7 @@ import apisisbii.modelos.CPNDetalhadoPadrao;
 import apisisbii.modelos.CPNDetalhadoPersonalizado;
 
 public class CPNDetalhadoDAO {
-	private final String inputFileCPN = "/home/tassio/cpnshared/Versão2/MR/Pump-MRV2.cpn";
+	private final String inputFileCPN = "/home/tassio/0/Pump-AccuV2.cpn";
 	private final String outputFileCPN = "/home/tassio/cpnshared/Versão2/MR/Pump-MRV2.cpn";
 	private final String inputFileBasal = "/home/tassio/cpnshared/Versão2/MR/BasalV2MR.txt";;
 	
