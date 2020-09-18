@@ -1,7 +1,5 @@
 package apisisbii.modelos;
 
-import java.util.Arrays;
-
 import org.cpntools.accesscpn.engine.highlevel.instance.Instance;
 import org.cpntools.accesscpn.model.PlaceNode;
 
@@ -20,13 +18,15 @@ public class InsulinPumpSimulationMonitor extends SimulationMonitor{
 	private int amountOfBatteryDischarged;
 	private int timeCurrent;
 	private float totalSelectedDose;
-	private String note;
 	
-	public void configureConstantParameters(String basalOption) throws Exception {
-		CPNDetalhadoDAO CPNDetDAO = new CPNDetalhadoDAO();
-		setBolus(CPNDetDAO.getParametroCPNDet("BOLUS")); 
-		this.cbolus = CPNDetDAO.getParametroCPNDet("CBOLUS");
-		this.cartridgeCapacity = CPNDetDAO.getParametroCPNDet("CAPCART");
+	CPNDetalhadoDAO CPNDetDAO = new CPNDetalhadoDAO();
+	
+	public InsulinPumpSimulationMonitor() {
+		// TODO Auto-generated constructor stub
+		CPNDetDAO = new CPNDetalhadoDAO();
+	}
+	
+	public void configureRateAdm(String basalOption) throws Exception {
 		if(basalOption.equals("standard")) {
 			this.doseOfRateAdm = CPNDetDAO.getParametroCPNDet("DADMPD");
 			this.timeOfRateAdm = (int) CPNDetDAO.getParametroCPNDet("TADMPD: TIME");
@@ -36,14 +36,17 @@ public class InsulinPumpSimulationMonitor extends SimulationMonitor{
 			this.timeOfRateAdm = (int) CPNDetDAO.getParametroCPNDet("TADMPS: TIME");
 		}
 	}
+
+	public void configureBolus() throws Exception {
+		this.bolus = CPNDetDAO.getParametroCPNDet("BOLUS"); 
+	}
 	
-	public void configureCartridgeLevel(Simulator simulator) throws Exception{
-		if(simulator.allPlacesAreMarked(Arrays.asList(new String[] {"EC"}))) {
-			setNote("EC");
-		}
-		else {
-			setNote("LCL");
-		}
+	public void configureCBolus() throws Exception {
+		this.cbolus = CPNDetDAO.getParametroCPNDet("CBOLUS");
+	}
+	
+	public void configureCartridgeCapacity() throws Exception {
+		this.cartridgeCapacity = CPNDetDAO.getParametroCPNDet("CAPCART");
 	}
 
 	public void countBatteries(Simulator simulator) throws Exception{
@@ -70,7 +73,16 @@ public class InsulinPumpSimulationMonitor extends SimulationMonitor{
 		}
 	}
 	
-	public void configureTotalSelectedDose(String marking) throws Exception{
+	public void configureTotalSelectedDose(Simulator simulator, String basalOption) throws Exception{
+		String place = "empty";
+		if(basalOption.equals("standard")) {
+			place = "SI.A";
+		}
+		else if(basalOption.equals("personalized")) {
+			place = "PI.A";
+		}
+		
+		String marking = simulator.getPlaceMarking(place);
 		if(!marking.equals("empty")) {
 			int i0, i1;
 			i0 = marking.indexOf("`");
@@ -79,7 +91,7 @@ public class InsulinPumpSimulationMonitor extends SimulationMonitor{
 		}
 	}
 	
-	public void configureBasal(String marking) throws Exception{
+	public void configureBasal(String marking){
 		if(!marking.equals("empty")) {
 			String[] separetedMarking = marking.split("\\+++\\n");
 			for (String string : separetedMarking) {
@@ -179,13 +191,5 @@ public class InsulinPumpSimulationMonitor extends SimulationMonitor{
 
 	public int getTimeCurrent() {
 		return timeCurrent;
-	}
-	
-	public String getNote() {
-		return note;
-	}
-
-	public void setNote(String note) {
-		this.note = note;
 	}
 }

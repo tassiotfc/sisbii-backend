@@ -80,59 +80,81 @@ public class Simulator {
 	}
 	
 	public void enableTransitions(List<String> stopTransitions, List<String> exclusionTransitions) 
-			throws IOException, Exception{
+			throws Exception{
 		if(!stopTransitions.isEmpty()){
 			List<Instance<? extends Transition>> tisEnabled;
 			while(true) {
-				tisEnabled = s.isEnabled(s.getAllTransitionInstances());
-				if(tisEnabled.isEmpty()) {
-					s.increaseTime();
-				}
-				tisEnabled = s.isEnabled(s.getAllTransitionInstances());
-				System.out.println("L1:" + tisEnabled);
-				int count = 0;
-				for(String transition: stopTransitions) {
-					for (Instance<? extends Transition> instance : tisEnabled) {
-						if(instance.toString().contains(transition)) {
-							count++;
-						}
-					}
-				}
-				if(count == stopTransitions.size()) {
+				tisEnabled = getTransitionsEnabled();
+				if(transitionsAreEnabled(tisEnabled, stopTransitions)) {
 					break;
 				}
-				
-				boolean canFire;
-				List<Instance<? extends Transition>> tisEnabledAux = new ArrayList<Instance<? extends Transition>>();
-				for (Instance<? extends Transition> instance : tisEnabled) {
-					canFire = true;
-					for(String transition: exclusionTransitions) {
-						if(instance.toString().contains(transition)) {
-							canFire = false;
-							break;
-						}
-					}
-					if(canFire) {
-						tisEnabledAux.add(instance);
-					}
-				}
+
+				List<Instance<? extends Transition>> tisEnabledThatCanFire = 
+						getTransitionsThatCanFire(tisEnabled, exclusionTransitions);
 				
 				List<Instance<Transition>> tisExecutaveis;
 				Instance<? extends Transition> transition;
-				System.out.println("L2: " + tisEnabledAux);
-				if(!tisEnabledAux.isEmpty()) {
-					tisExecutaveis = transitionsEnabledToExecutable(tisEnabledAux);
+				if(!tisEnabledThatCanFire.isEmpty()) {
+					tisExecutaveis = transitionsEnabledToExecutable(tisEnabledThatCanFire);
 					transition = s.execute(tisExecutaveis);
 				}
 				else{
 					transition = s.execute();
 				}
-				System.out.println("T:" + transition);
 				configureLastTransitionFired(transition);
 			}
 			configureEnabledTransitions();
 		}
 	}
+	
+	private List<Instance<? extends Transition>> getTransitionsEnabled() throws Exception {
+		List<Instance<? extends Transition>> tisEnabled;
+		tisEnabled = s.isEnabled(s.getAllTransitionInstances());
+		if(tisEnabled.isEmpty()) {
+			s.increaseTime();
+		}
+		tisEnabled = s.isEnabled(s.getAllTransitionInstances());
+		return tisEnabled;
+	}
+	
+	private boolean transitionsAreEnabled(List<Instance<? extends Transition>> tisEnabled, 
+			List<String> stopTransitions) {
+		int count = 0;
+		for(String transition: stopTransitions) {
+			for (Instance<? extends Transition> instance : tisEnabled) {
+				if(instance.toString().contains(transition)) {
+					count++;
+				}
+			}
+		}
+		if(count == stopTransitions.size()) {
+			return true;
+		}
+		return false;
+	}
+	
+	private List<Instance<? extends Transition>> getTransitionsThatCanFire(
+			List<Instance<? extends Transition>> tisEnabled, 
+			List<String> exclusionTransitions){
+		
+		boolean canFire;
+		List<Instance<? extends Transition>> tisEnabledThatCanFire = new ArrayList<Instance<? extends Transition>>();
+		for (Instance<? extends Transition> instance : tisEnabled) {
+			canFire = true;
+			for(String transition: exclusionTransitions) {
+				if(instance.toString().contains(transition)) {
+					canFire = false;
+					break;
+				}
+			}
+			if(canFire) {
+				tisEnabledThatCanFire.add(instance);
+			}
+		}
+		return tisEnabledThatCanFire;
+	}
+	
+	
 	
 	public Instance<? extends Transition> getEnabledTransition(String transicao) throws Exception{
 		List<Instance<? extends Transition>> tis = s.isEnabled(s.getAllTransitionInstances());
@@ -231,22 +253,12 @@ public class Simulator {
 		return null;
 	}
 	
-	public Instance<? extends Transition> execute() throws Exception{
-		return s.execute();
-	}
-	
 	public void executeBinding(Binding b) throws Exception{
 		s.execute(b);
 		configureEnabledTransitions();
 		configureLastTransitionFired(b);
 	}
-	
-	public void executeTransition(Instance<? extends Transition> t) throws Exception{
-		s.execute(t);
-		configureEnabledTransitions();
-		configureLastTransitionFired(t);
-	}
-	
+		
 	private void configureEnabledTransitions() throws Exception{
 		simulationMonitor.setEnabledTransitions(transitionsEnabledToString(
 				s.isEnabled(s.getAllTransitionInstances())));

@@ -2,6 +2,7 @@ package apisisbii.controladores;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,114 +22,132 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 @RestController
-@RequestMapping(value="api")
+@RequestMapping(value="simulation")
 public class InsulinPumpSimulatorControl {
 	InsulinPumpSimulator insulinPumpSimulator;
 	
-	@GetMapping("/preparesimulationenvironment")
-	public InsulinPumpSimulationMonitor prepareSimulationEnvironment(){
-		try {
-			insulinPumpSimulator = new InsulinPumpSimulator();
-			return insulinPumpSimulator.createAndConfigureSimulationMonitor();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+	@GetMapping("/prepareenvironment")
+	public InsulinPumpSimulationMonitor prepareSimulationEnvironment() 
+			throws Exception 
+	{
+		insulinPumpSimulator = new InsulinPumpSimulator();
+		insulinPumpSimulator.createSimulationMonitor();
+		insulinPumpSimulator.updateParameterCartridgeCapacity();
+		return insulinPumpSimulator.updateTransitions();
 	}
 	
 	@PostMapping("/setuppump")
-	public InsulinPumpSimulationMonitor setupInsulinPump(
-			@RequestBody String basalOption) throws Exception {
-		return insulinPumpSimulator.setupInsulinPump(basalOption);
+	public InsulinPumpSimulationMonitor setupInsulinPump (
+			@RequestBody String basalOption) throws Exception 
+	{
+		List<String> fireTransitionsAux = Arrays.asList();
+		if(basalOption.equals("standard")) {
+			fireTransitionsAux = Arrays.asList(new String[]{"SMC.Standard_Conf"});			
+		}
+		else if(basalOption.equals("personalized")) {
+			fireTransitionsAux = Arrays.asList(new String[]{"PMC.Standard_Conf"});
+		}
+		insulinPumpSimulator.executeSimulation(Arrays.asList(new String[]{"Standard_Conf"}),
+				Arrays.asList(new String[]{"Battery_Situation"}), 
+				fireTransitionsAux);
+		insulinPumpSimulator.executeSimulation(Arrays.asList(new String[]{"Adm_Basal", "Adm_Bolus", "Adm_CBolus"}), 
+				Arrays.asList(new String[]{"Battery_Situation"}), 
+				Arrays.asList());
+		insulinPumpSimulator.updateParameterBasal();
+		insulinPumpSimulator.updateParameterBolus();
+		insulinPumpSimulator.updateParameterBolus();
+		insulinPumpSimulator.updateParameterRateAdm(basalOption);
+		insulinPumpSimulator.updateCartridgeVolume();
+		insulinPumpSimulator.updateParameterBatteries();
+		insulinPumpSimulator.updateParameterTimeCurrent();
+		return insulinPumpSimulator.updateTransitions();
 	}
 	
-	@PostMapping("/simulatemodel")
-	public InsulinPumpSimulationMonitor simulateModel(
-			@RequestBody InsulinPumpSimulationRestrictor simulationRestrictor)
+	@PostMapping("/simulate")
+	public InsulinPumpSimulationMonitor simulate(
+			@RequestBody InsulinPumpSimulationRestrictor simulationRestrictor) 
+					throws Exception
 	{
-		try {
-			return insulinPumpSimulator.simulateModel(simulationRestrictor);
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
-		return null;
+		insulinPumpSimulator.executeSimulation(simulationRestrictor);
+		return insulinPumpSimulator.updateTransitions();
+	}
+	
+	@PostMapping("/selection")
+	public InsulinPumpSimulationMonitor goToSelection(
+			@RequestBody InsulinPumpSimulationRestrictor simulationRestrictor) 
+					throws Exception
+	{
+		insulinPumpSimulator.executeSimulation(simulationRestrictor);
+		insulinPumpSimulator.updateParameterBasal();
+		insulinPumpSimulator.updateCartridgeVolume();
+		insulinPumpSimulator.updateParameterBatteries();
+		insulinPumpSimulator.updateParameterTimeCurrent();
+		return insulinPumpSimulator.updateTransitions();
 	}
 	
 	@PostMapping("/simulateinfusion")
 	public InsulinPumpSimulationMonitor simulateInfusion(
-			@RequestBody InsulinPumpSimulationRestrictor simulationRestrictor)
+			@RequestBody InsulinPumpSimulationRestrictor simulationRestrictor) throws Exception
 	{
-		try {
-			insulinPumpSimulator.getSimulator().fireTransitions(
-					Arrays.asList(new String[] {"Finish_Partial_App"}));
-			return insulinPumpSimulator.applyPartialDosage(simulationRestrictor);
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
-		return null;
+		insulinPumpSimulator.executeSimulation(Arrays.asList(), Arrays.asList(), 
+				Arrays.asList(new String[] {"Finish_Partial_App"}));
+		insulinPumpSimulator.applyPartialDosage(simulationRestrictor);
+		
+		insulinPumpSimulator.updateCartridgeVolume();
+		insulinPumpSimulator.updateParameterBatteries();
+		insulinPumpSimulator.updateParameterTimeCurrent();
+		return insulinPumpSimulator.updateTransitions();
 	}
 	
 	@PostMapping("/preparesimulateinfusion")
 	public InsulinPumpSimulationMonitor prepareSimulationInfusion(
-			@RequestBody InsulinPumpSimulationRestrictor simulationRestrictor)
+			@RequestBody InsulinPumpSimulationRestrictor simulationRestrictor) throws Exception
 	{
-		try {
-			insulinPumpSimulator.getSimulator().fireTransitions(simulationRestrictor.getTransitionsToFire());
-			simulationRestrictor.setTransitionsToFire(Arrays.asList());
-			insulinPumpSimulator.updateTransitions();
-			if(insulinPumpSimulator.transitionIsEnabled("Prepare_Partial_Application")) {
-				String place = "empty";
-				if(simulationRestrictor.getBasalOption().equals("standard")) {
-					place = "SI.A";
-				}
-				else if(simulationRestrictor.getBasalOption().equals("personalized")) {
-					place = "PI.A";
-				}
-				insulinPumpSimulator.getInsulinPumpSimulationMonitor().configureTotalSelectedDose(
-						insulinPumpSimulator.getSimulator().getPlaceMarking(place));
-				insulinPumpSimulator.getSimulator().fireTransitions(
-						Arrays.asList(new String[] {"Prepare_Partial_Application"}));
-				insulinPumpSimulator.applyPartialDosage(simulationRestrictor);
-			}
-			else if(insulinPumpSimulator.transitionIsEnabled("Update1")) {
-				insulinPumpSimulator.getSimulator().fireTransitions(Arrays.asList(new String[] {"Update1"}));
-				insulinPumpSimulator.getInsulinPumpSimulationMonitor().configureCartridgeLevel(
-						insulinPumpSimulator.getSimulator());
-			}
-			return insulinPumpSimulator.updateTransitions();
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
+		insulinPumpSimulator.executeSimulation(Arrays.asList(), Arrays.asList(), 
+				simulationRestrictor.getTransitionsToFire());
+		simulationRestrictor.setTransitionsToFire(Arrays.asList());
+		
+		insulinPumpSimulator.updateTransitions();
+		if(insulinPumpSimulator.transitionIsEnabled("Prepare_Partial_Application")) {
+			insulinPumpSimulator.updateParameterTotalSelectedDose(simulationRestrictor);
+			insulinPumpSimulator.executeSimulation(Arrays.asList(), Arrays.asList(), 
+					Arrays.asList(new String[] {"Prepare_Partial_Application"}));
+			insulinPumpSimulator.applyPartialDosage(simulationRestrictor);
 		}
-		return null;
+		else if(insulinPumpSimulator.transitionIsEnabled("Update1")) {
+			insulinPumpSimulator.executeSimulation(Arrays.asList(), Arrays.asList(), 
+					Arrays.asList(new String[] {"Update1"}));
+		}
+		insulinPumpSimulator.updateCartridgeVolume();
+		insulinPumpSimulator.updateParameterBatteries();
+		insulinPumpSimulator.updateParameterTimeCurrent();
+		return insulinPumpSimulator.updateTransitions();
 	}
 		
-	@GetMapping("/finishsimulation")
-	public boolean finishSimulation() throws Exception {
-		return insulinPumpSimulator.getSimulator().destroySimulator();
+	@GetMapping("/finish")
+	public boolean finishSimulation() throws Exception 
+	{
+		return insulinPumpSimulator.destroySimulator();
 	}
 		
 	@GetMapping("/downloadreport")
-	public ResponseEntity<Object> downloadSimulationReport() throws Exception
+	public ResponseEntity<Object> downloadSimulationReport() throws Exception 
 	{
-			String filename = insulinPumpSimulator.generateSimulationReportInsulinPump();
-			File file = new File(filename);
-			InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+		String filename = insulinPumpSimulator.generateSimulationReportInsulinPump();
+		File file = new File(filename);
+		InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
 			
-			HttpHeaders headers = new HttpHeaders();
-			headers.add("Content-Disposition",
-					String.format("attachment; filename=\"%s\"", file.getName()));
-			headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
-			headers.add("Pragma", "no-cache");
-			headers.add("Expires", "0");
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Content-Disposition",
+				String.format("attachment; filename=\"%s\"", file.getName()));
+		headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+		headers.add("Pragma", "no-cache");
+		headers.add("Expires", "0");
 
-			ResponseEntity<Object> responseEntity = ResponseEntity.ok().headers(headers)
-					.contentLength(file.length())
-					.contentType(MediaType.parseMediaType("application/txt")).body(resource);
+		ResponseEntity<Object> responseEntity = ResponseEntity.ok().headers(headers)
+				.contentLength(file.length())
+				.contentType(MediaType.parseMediaType("application/txt")).body(resource);
 
-			return responseEntity;
+		return responseEntity;
 	}
 }
