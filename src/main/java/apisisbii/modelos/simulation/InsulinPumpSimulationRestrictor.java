@@ -1,4 +1,4 @@
-package apisisbii.modelos;
+package apisisbii.modelos.simulation;
 
 public class InsulinPumpSimulationRestrictor extends SimulationRestrictor{ 
 	private String basalOption;

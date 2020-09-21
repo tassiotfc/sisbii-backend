@@ -1,4 +1,4 @@
-package apisisbii.modelos;
+package apisisbii.modelos.simulation;
 
 import java.io.IOException;
 import java.net.URL;

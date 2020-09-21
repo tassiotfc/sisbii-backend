@@ -1,9 +1,9 @@
-package apisisbii.modelos;
+package apisisbii.modelos.simulation;
 
 import org.cpntools.accesscpn.engine.highlevel.instance.Instance;
 import org.cpntools.accesscpn.model.PlaceNode;
 
-import apisisbii.modelos.DAO.CPNDetalhadoDAO;
+import apisisbii.modelos.DAO.InsulinPumpDetailedDAO;
 
 public class InsulinPumpSimulationMonitor extends SimulationMonitor{
 	private float bolus;
@@ -19,34 +19,34 @@ public class InsulinPumpSimulationMonitor extends SimulationMonitor{
 	private int timeCurrent;
 	private float totalSelectedDose;
 	
-	CPNDetalhadoDAO CPNDetDAO = new CPNDetalhadoDAO();
+	InsulinPumpDetailedDAO insulinPumpDetailedDAO;
 	
 	public InsulinPumpSimulationMonitor() {
 		// TODO Auto-generated constructor stub
-		CPNDetDAO = new CPNDetalhadoDAO();
+		insulinPumpDetailedDAO = new InsulinPumpDetailedDAO();
 	}
 	
 	public void configureRateAdm(String basalOption) throws Exception {
 		if(basalOption.equals("standard")) {
-			this.doseOfRateAdm = CPNDetDAO.getParametroCPNDet("DADMPD");
-			this.timeOfRateAdm = (int) CPNDetDAO.getParametroCPNDet("TADMPD: TIME");
+			this.doseOfRateAdm = insulinPumpDetailedDAO.getValueOfParameter("DADMPD");
+			this.timeOfRateAdm = (int) insulinPumpDetailedDAO.getValueOfParameter("TADMPD: TIME");
 		}
 		else if(basalOption.equals("personalized")) {
-			this.doseOfRateAdm = CPNDetDAO.getParametroCPNDet("DADMPS");
-			this.timeOfRateAdm = (int) CPNDetDAO.getParametroCPNDet("TADMPS: TIME");
+			this.doseOfRateAdm = insulinPumpDetailedDAO.getValueOfParameter("DADMPS");
+			this.timeOfRateAdm = (int) insulinPumpDetailedDAO.getValueOfParameter("TADMPS: TIME");
 		}
 	}
 
 	public void configureBolus() throws Exception {
-		this.bolus = CPNDetDAO.getParametroCPNDet("BOLUS"); 
+		this.bolus = insulinPumpDetailedDAO.getValueOfParameter("BOLUS"); 
 	}
 	
 	public void configureCBolus() throws Exception {
-		this.cbolus = CPNDetDAO.getParametroCPNDet("CBOLUS");
+		this.cbolus = insulinPumpDetailedDAO.getValueOfParameter("CBOLUS");
 	}
 	
 	public void configureCartridgeCapacity() throws Exception {
-		this.cartridgeCapacity = CPNDetDAO.getParametroCPNDet("CAPCART");
+		this.cartridgeCapacity = insulinPumpDetailedDAO.getValueOfParameter("CAPCART");
 	}
 
 	public void countBatteries(Simulator simulator) throws Exception{
