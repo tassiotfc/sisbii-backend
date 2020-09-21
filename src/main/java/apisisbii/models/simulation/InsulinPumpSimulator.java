@@ -1,4 +1,4 @@
-package apisisbii.modelos.simulation;
+package apisisbii.models.simulation;
 
 import java.util.Arrays;
 import java.util.List;

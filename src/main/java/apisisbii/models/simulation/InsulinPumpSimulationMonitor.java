@@ -1,9 +1,9 @@
-package apisisbii.modelos.simulation;
+package apisisbii.models.simulation;
 
 import org.cpntools.accesscpn.engine.highlevel.instance.Instance;
 import org.cpntools.accesscpn.model.PlaceNode;
 
-import apisisbii.modelos.DAO.InsulinPumpDetailedDAO;
+import apisisbii.models.DAO.InsulinPumpDetailedDAO;
 
 public class InsulinPumpSimulationMonitor extends SimulationMonitor{
 	private float bolus;

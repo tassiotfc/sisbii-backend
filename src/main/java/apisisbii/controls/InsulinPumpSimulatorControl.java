@@ -1,4 +1,4 @@
-package apisisbii.controladores;
+package apisisbii.controls;
 
 import java.io.File;
 import java.util.Arrays;
@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import apisisbii.modelos.simulation.InsulinPumpSimulationMonitor;
-import apisisbii.modelos.simulation.InsulinPumpSimulationRestrictor;
-import apisisbii.modelos.simulation.InsulinPumpSimulator;
+import apisisbii.models.simulation.InsulinPumpSimulationMonitor;
+import apisisbii.models.simulation.InsulinPumpSimulationRestrictor;
+import apisisbii.models.simulation.InsulinPumpSimulator;
 
 import java.io.FileInputStream;
 

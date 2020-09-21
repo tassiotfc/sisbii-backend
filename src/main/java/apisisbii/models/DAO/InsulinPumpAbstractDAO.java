@@ -1,4 +1,4 @@
-package apisisbii.modelos.DAO;
+package apisisbii.models.DAO;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
