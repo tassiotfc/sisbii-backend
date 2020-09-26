@@ -55,7 +55,7 @@ public class InsulinPumpSimulatorControl {
 				Arrays.asList());
 		insulinPumpSimulator.updateParameterBasal();
 		insulinPumpSimulator.updateParameterBolus();
-		insulinPumpSimulator.updateParameterBolus();
+		insulinPumpSimulator.updateParameterCBolus();
 		insulinPumpSimulator.updateParameterRateAdm(basalOption);
 		insulinPumpSimulator.updateCartridgeVolume();
 		insulinPumpSimulator.updateParameterBatteries();

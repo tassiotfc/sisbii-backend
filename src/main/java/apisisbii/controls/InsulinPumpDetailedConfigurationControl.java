@@ -53,7 +53,7 @@ public class InsulinPumpDetailedConfigurationControl {
 		ArrayList<String> parametersName = new ArrayList<String>(Arrays.asList(
 				new String[]{"BASAL", "BOLUS", "CBOLUS", "CAPCART", "UPPERDOSELIMIT", 
 						"LOWERDOSELIMIT", "INFUSIONLIMIT", 
-						"DADMPD", "TADMPD: TIME", "TADMBPD: TIME",
+						"DADMPD", "TADMPD: TIME", "TADMBPD: TIME", 
 						"DADMPS", "TADMPS: TIME", "TADMBPS: TIME", 
 						"QTDBASAL"}));
 		

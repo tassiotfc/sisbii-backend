@@ -27,8 +27,8 @@ import org.xml.sax.InputSource;
 import apisisbii.models.detailedinsulinpump.InsulinPumpDetailed;
 public class InsulinPumpDetailedDAO {
 	
-	public static final String inputFileCPN = "/home/tassio/1/Pump-AccuV2.cpn";
-	public static final String outputFileCPN = "/home/tassio/1/Pump-AccuV2.cpn";
+	public static final String inputFileCPN = "/home/tassio/1/a.cpn";
+	public static final String outputFileCPN = "/home/tassio/1/a.cpn";
 	public static final String fileBasal = "/home/tassio/1/BasalV2AC.txt";
 	
 	public List<Float> getValueOfParametersInsulinPump(ArrayList<String> parametersName) throws Exception{	
@@ -47,7 +47,7 @@ public class InsulinPumpDetailedDAO {
 		XPath xpath = XPathFactory.newInstance().newXPath();
 		int i0, i1;
 		NodeList node = (NodeList)xpath.evaluate("//layout[contains(text(),'val "+parameterName+"')]", 
-					doc, XPathConstants.NODESET);
+					doc, XPathConstants.NODESET); 
 		i0 = node.item(0).getTextContent().indexOf("=");
 		i1 = node.item(0).getTextContent().indexOf(";");
 		parameterValue = Float.parseFloat(node.item(0).getTextContent().substring(i0+2, i1));

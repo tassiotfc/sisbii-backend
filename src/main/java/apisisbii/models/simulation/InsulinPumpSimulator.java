@@ -5,17 +5,18 @@ import java.util.List;
 
 import org.cpntools.accesscpn.engine.highlevel.instance.Binding;
 
+import apisisbii.models.DAO.InsulinPumpDetailedDAO;
+
 public class InsulinPumpSimulator {
 	
-	private final String inputFileCPN = "/home/tassio/0/Pump-AccuV2.cpn";
-	private final String reportDirectory = "/home/tassio/0";
+	private final String reportDirectory = "/home/tassio/1";
 	private final String report = "SimulationReportInsulinPump.txt";
 	private InsulinPumpSimulationMonitor insulinPumpSM;
 	
-	private Simulator simulator;
+	private Simulator simulator; 
 	
 	public InsulinPumpSimulator() throws Exception {
-		simulator = new Simulator(inputFileCPN, reportDirectory);
+		simulator = new Simulator(InsulinPumpDetailedDAO.inputFileCPN, reportDirectory);
 	}
 	
 	public void createSimulationMonitor() throws Exception {
