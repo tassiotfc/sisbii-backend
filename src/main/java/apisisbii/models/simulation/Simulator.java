@@ -224,7 +224,6 @@ public class Simulator {
 				transitions.add(instance);
 			}
 		}
-		
 		for (Instance<? extends Transition> instance : transitions) {
 			for (Binding b: s.getBindings(instance)) {
 				if(b.toString().contains(binding)) {

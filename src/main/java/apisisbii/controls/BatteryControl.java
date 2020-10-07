@@ -2,13 +2,11 @@ package apisisbii.controls;
 
 import java.util.List;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,42 +15,43 @@ import org.springframework.web.bind.annotation.RestController;
 import apisisbii.models.DAO.BatteryDAO;
 import apisisbii.models.DAO.InsulinPumpDetailedDAO;
 
-/**
- * @author tassio
- *
- */
 @RestController
 @RequestMapping(value="battery")
 public class BatteryControl {
 	
-	/*
-	 * "DONE" ""
-	 */
 	public final String ID_PAG_HARDWARE = "ID1436919045";
 	public final String ID_INST_TRANS_HARDWARE = "ID1436919090";
+	public final String ID_OKB1 = "ID1501681046";
+	public final String ID_OKB2 = "ID1502342128";
+	public final String ID_OKB3 = "ID1437162252";
 	
-	/**
-	 * 
-	 * @param number
-	 * @return status (false = no done; true = done)
-	 * @throws Exception
-	 */
+	@GetMapping("/quantity")
+	public int getQuantityBattery() throws Exception {
+		InsulinPumpDetailedDAO insulinPumpDetailedDAO = new InsulinPumpDetailedDAO();
+		Document doc = insulinPumpDetailedDAO.getDocumentInsulinPump();
+				
+		Element nodePageHardware = doc.getElementById(ID_PAG_HARDWARE);
+		NodeList nodesTrans = nodePageHardware.getElementsByTagName("trans");
+		
+		BatteryDAO batteryDAO = new BatteryDAO();
+		int numberBatteryInstance =  batteryDAO.countBatteryIntance(nodesTrans);
+		return numberBatteryInstance;
+	}
+	
 	@PostMapping("/add")
 	public boolean addBatteryInstance(@RequestBody int number) throws Exception{
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder builder;
-		builder = factory.newDocumentBuilder();
-		Document doc;
-		doc = builder.parse(InsulinPumpDetailedDAO.inputFileCPN);
-		
-		boolean status =  false;
-		
+		InsulinPumpDetailedDAO insulinPumpDetailedDAO = new InsulinPumpDetailedDAO();
+		Document doc = insulinPumpDetailedDAO.getDocumentInsulinPump();
+				
 		Element nodePageHardware = doc.getElementById(ID_PAG_HARDWARE);
 		NodeList nodesTrans = nodePageHardware.getElementsByTagName("trans");
 		
 		BatteryDAO batteryDAO = new BatteryDAO();
 		int numberBatteryInstance =  batteryDAO.countBatteryIntance(nodesTrans);
 		if(numberBatteryInstance >= 1) {
+			batteryDAO.setBatteryInstanceQuantity(doc, ID_OKB1, ID_OKB2, ID_OKB3,
+					(numberBatteryInstance + number));
+			
 			int i;
 			for(i = 1; i <= number; i++) {
 				batteryDAO.readXMLIDs(doc);
@@ -70,27 +69,25 @@ public class BatteryControl {
 				Element nodeInstanceHardware = doc.getElementById(ID_INST_TRANS_HARDWARE);
 				Node childNodeInstanceHardware = nodeInstanceHardware.getChildNodes().item(1);
 				Node newChildNodeInstanceHardware = childNodeInstanceHardware.cloneNode(true);
-				newChildNodeInstanceHardware.getAttributes().getNamedItem("id").setTextContent(batteryDAO.generateNewID());
-				newChildNodeInstanceHardware.getAttributes().getNamedItem("trans").setTextContent(IDNewBatteryTrans);
-				
+				newChildNodeInstanceHardware.getAttributes().getNamedItem("id").
+					setTextContent(batteryDAO.generateNewID());
+				newChildNodeInstanceHardware.getAttributes().getNamedItem("trans").
+					setTextContent(IDNewBatteryTrans);
 				nodeInstanceHardware.insertBefore(newChildNodeInstanceHardware, childNodeInstanceHardware);
 				
-				batteryDAO.saveXML(doc, InsulinPumpDetailedDAO.outputFileCPN);
-				status = true;
+				insulinPumpDetailedDAO.saveInsulinPump(doc);
+				
+				numberBatteryInstance++;
 			}
+			return true;
 		}
-		return status;
+		return false;
 	}
 	
 	@PostMapping("/rm")
 	public boolean removeBatteryInstance(@RequestBody int number) throws Exception{
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder builder;
-		builder = factory.newDocumentBuilder();
-		Document doc;
-		doc = builder.parse(InsulinPumpDetailedDAO.inputFileCPN);
-		
-		boolean status =  false;
+		InsulinPumpDetailedDAO insulinPumpDetailedDAO = new InsulinPumpDetailedDAO();
+		Document doc = insulinPumpDetailedDAO.getDocumentInsulinPump();
 		
 		Element nodePageHardware = doc.getElementById(ID_PAG_HARDWARE);
 		NodeList nodesTrans = nodePageHardware.getElementsByTagName("trans");
@@ -98,6 +95,9 @@ public class BatteryControl {
 		BatteryDAO batteryDAO = new BatteryDAO();
 		int numberBatteryInstance =  batteryDAO.countBatteryIntance(nodesTrans);
 		if(numberBatteryInstance > number) {
+			batteryDAO.setBatteryInstanceQuantity(doc, ID_OKB1, ID_OKB2, ID_OKB3,
+					(numberBatteryInstance - number));
+			
 			int k;
 			Element nodeInstanceHardware = doc.getElementById(ID_INST_TRANS_HARDWARE);
 			NodeList nodesCPNSheet = doc.getElementsByTagName("cpnsheet");
@@ -110,18 +110,9 @@ public class BatteryControl {
 				for(l = 0; l < childsNodeInstanceHardware.getLength(); l++) {
 					Node childNodeIntanceHardware = childsNodeInstanceHardware.item(l);
 					if(childNodeIntanceHardware.hasAttributes()) {
-						if(childNodeIntanceHardware.getAttributes().getNamedItem("trans").getNodeValue().equals(IDBattery)) {
-							String IDChildNodeInstanceHardware = childNodeIntanceHardware.getAttributes().getNamedItem("id").getNodeValue() ;
-							int m;
-							boolean hasNoCPNSheet = true;
-							for(m = 0; m < nodesCPNSheet.getLength(); m++) {
-								Node noCPNSheet = nodesCPNSheet.item(m);
-								if(noCPNSheet.getAttributes().getNamedItem("instance").getNodeValue().equals(IDChildNodeInstanceHardware)) {
-									hasNoCPNSheet = false;
-									break;
-								}
-							}
-							if(hasNoCPNSheet) {
+						if(childNodeIntanceHardware.getAttributes().getNamedItem("trans").
+								getNodeValue().equals(IDBattery)) {
+							if(!batteryDAO.hasCPNSheet(nodesCPNSheet, childNodeIntanceHardware)) {
 								nodeInstanceHardware.removeChild(childNodeIntanceHardware);
 								NodeList nodesArc = nodePageHardware.getElementsByTagName("arc");
 								List<Node> nodesBatteryArc = batteryDAO.getNodesBatteryArcs(nodesArc, IDBattery);
@@ -134,11 +125,11 @@ public class BatteryControl {
 						}
 					}
 				}
-				
 			}
-			batteryDAO.saveXML(doc, InsulinPumpDetailedDAO.outputFileCPN);
-			status = true;
+			
+			insulinPumpDetailedDAO.saveInsulinPump(doc);
+			return true;
 		}
-		return status;
+		return false;
 	}
 }

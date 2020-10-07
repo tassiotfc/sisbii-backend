@@ -1,21 +1,13 @@
 package apisisbii.models.DAO;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
-import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
-import org.w3c.dom.DocumentType;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -32,6 +24,19 @@ public class BatteryDAO {
 			}
 		}
 		return count;
+	}
+	
+	public void setBatteryInstanceQuantity(Document doc, String ID_OKB1, 
+			String ID_OKB2, String ID_OKB3, int quantity) {
+		Element nodeMarkingOKB1 = doc.getElementById(ID_OKB1);
+		Element nodeMarkingOKB2 = doc.getElementById(ID_OKB2);
+		Element nodeMarkingOKB3 = doc.getElementById(ID_OKB3);
+		NodeList childsNodeMarkingOKB1 = nodeMarkingOKB1.getChildNodes();
+		NodeList childsNodeMarkingOKB2 = nodeMarkingOKB2.getChildNodes();
+		NodeList childsNodeMarkingOKB3 = nodeMarkingOKB3.getChildNodes();
+		childsNodeMarkingOKB1.item(9).setTextContent(quantity + "`1");
+		childsNodeMarkingOKB2.item(9).setTextContent(quantity + "`1");
+		childsNodeMarkingOKB3.item(9).setTextContent(quantity + "`1");
 	}
 	
 	public void readXMLIDs(Document doc) throws Exception{
@@ -90,13 +95,15 @@ public class BatteryDAO {
 				}
 			}
 			if(childNewBatteryTrans.getNodeName().toString().contains("subst")) {
-				childNewBatteryTrans.getChildNodes().item(1).getAttributes().getNamedItem("id").setNodeValue(generateNewID());
+				childNewBatteryTrans.getChildNodes().item(1).getAttributes().
+						getNamedItem("id").setNodeValue(generateNewID());
 			}
 			if(childNewBatteryTrans.getNodeName().toString().equals("text")) {
 				childNewBatteryTrans.setTextContent("Battery"+(numberBatteryInstance+1));
 			}
 			if(childNewBatteryTrans.getNodeName().equals("posattr")) {
-				float value = Float.parseFloat(childNewBatteryTrans.getAttributes().getNamedItem("y").getNodeValue());
+				float value = Float.parseFloat(childNewBatteryTrans.getAttributes().
+						getNamedItem("y").getNodeValue());
 				value += 100;  
 				childNewBatteryTrans.getAttributes().getNamedItem("y").setNodeValue(""+value);
 			}
@@ -123,7 +130,8 @@ public class BatteryDAO {
 		return nodesBatteryArc;
 	}
 	
-	public void configureNewsBatteryArcs(List<Node> nodesBatteryArc, Element nodePageHardware, String IDNewBatteryTrans) throws Exception{
+	public void configureNewsBatteryArcs(List<Node> nodesBatteryArc, Element nodePageHardware, 
+			String IDNewBatteryTrans) throws Exception{
 		int i;
 		for(i = 0; i < nodesBatteryArc.size()   ; i++) {
 			Node nodeBatteryArc = nodesBatteryArc.get(i);
@@ -148,19 +156,17 @@ public class BatteryDAO {
 		}
 	}
 	
-	public void saveXML(Document doc, String outputFileCPN) throws Exception{
-		Transformer xformer = TransformerFactory.newInstance().newTransformer();
-		xformer.setOutputProperty(OutputKeys.INDENT, "no");
-		xformer.setOutputProperty(OutputKeys.STANDALONE, "yes");
-		xformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-		xformer.setOutputProperty(OutputKeys.METHOD, "xml");
-		
-		DOMImplementation domImpl = doc.getImplementation();
-		DocumentType doctype = domImpl.createDocumentType("doctype",
-		    "-//CPN//DTD CPNXML 1.0//EN",
-		    "http://cpntools.org/DTD/6/cpn.dtd");
-		xformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
-		xformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
-		xformer.transform(new DOMSource(doc), new StreamResult(new File(outputFileCPN)));
+	public boolean hasCPNSheet(NodeList nodesCPNSheet, Node childNodeIntanceHardware) {
+		String IDChildNodeInstanceHardware = childNodeIntanceHardware.getAttributes().
+														getNamedItem("id").getNodeValue() ;
+		int m;
+		for(m = 0; m < nodesCPNSheet.getLength(); m++) {
+			Node noCPNSheet = nodesCPNSheet.item(m);
+			if(noCPNSheet.getAttributes().getNamedItem("instance").getNodeValue().
+					equals(IDChildNodeInstanceHardware)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
