@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -18,17 +20,18 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
+import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
+import org.w3c.dom.DocumentType;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 import apisisbii.models.detailedinsulinpump.InsulinPumpDetailed;
 public class InsulinPumpDetailedDAO {
 	
-	public static final String inputFileCPN = "/home/tassio/1/a.cpn";
-	public static final String outputFileCPN = "/home/tassio/1/a.cpn";
+	public static final String inputFileCPN = "/home/tassio/1/Pump-AccuV2.cpn";
+	public static final String outputFileCPN = "/home/tassio/1/Pump-AccuV2.cpn";
 	public static final String fileBasal = "/home/tassio/1/BasalV2AC.txt";
 	
 	public List<Float> getValueOfParametersInsulinPump(ArrayList<String> parametersName) throws Exception{	
@@ -41,34 +44,17 @@ public class InsulinPumpDetailedDAO {
 	
 	public float getValueOfParameter(String parameterName) throws Exception{
 		float parameterValue;
-		Document doc = DocumentBuilderFactory.newInstance()
-	            .newDocumentBuilder().parse(new InputSource(inputFileCPN));
+		Document doc = getDocumentInsulinPump();
 		
 		XPath xpath = XPathFactory.newInstance().newXPath();
 		int i0, i1;
 		NodeList node = (NodeList)xpath.evaluate("//layout[contains(text(),'val "+parameterName+"')]", 
 					doc, XPathConstants.NODESET); 
-		i0 = node.item(0).getTextContent().indexOf("=");
+		i0 = node.item(0).getTextContent().indexOf("="); 
 		i1 = node.item(0).getTextContent().indexOf(";");
 		parameterValue = Float.parseFloat(node.item(0).getTextContent().substring(i0+2, i1));
 		
 		return parameterValue;
-	}
-	
-	public List<Float> readFileBasal() throws IOException {
-        BufferedReader buffRead = new BufferedReader(new FileReader(fileBasal));
-        List<Float> valuesBasal = new ArrayList<Float>();
-        String value;
-        while (true) {
-        	value = buffRead.readLine();
-        	if (value == null) {
-            	break;
-            }
-            
-            valuesBasal.add(Float.parseFloat(value));
-        }
-        buffRead.close();
-        return valuesBasal;
 	}
 	
 	private boolean parameterIsInteger(String parameter) {
@@ -83,8 +69,7 @@ public class InsulinPumpDetailedDAO {
 	public boolean updateValueOfParametersInsulinPump(InsulinPumpDetailed insulinPumpDetailed, 
 			ArrayList<String> parametersName, List<Float> listBasal){
 		try {
-			Document doc = DocumentBuilderFactory.newInstance()
-		        .newDocumentBuilder().parse(new InputSource(inputFileCPN));
+			Document doc = getDocumentInsulinPump();
 		
 			XPath xpath = XPathFactory.newInstance().newXPath();
 			NodeList node;
@@ -124,10 +109,8 @@ public class InsulinPumpDetailedDAO {
 				
 			}
 		
-			Transformer xformer = TransformerFactory.newInstance().newTransformer();
-			xformer.transform(new DOMSource(doc), new StreamResult(new File(outputFileCPN)));
-		
-			writeFileBasal(fileBasal, listBasal);
+			saveInsulinPump(doc);
+			saveFileBasal(fileBasal, listBasal);
 
 			return true;
 		}catch(Exception e) {
@@ -156,11 +139,50 @@ public class InsulinPumpDetailedDAO {
 		return parametersValue;
 	}
 	
-	private void writeFileBasal(String path, List<Float> listaBasal) throws IOException {
+	private void saveFileBasal(String path, List<Float> listaBasal) throws IOException {
         BufferedWriter buffWrite = new BufferedWriter(new FileWriter(path));
         for (Float integer : listaBasal) {
 			buffWrite.append(integer.toString() + "\n");
 		}
         buffWrite.close();
-	}	
+	}
+	
+	public List<Float> readFileBasal() throws IOException {
+        BufferedReader buffRead = new BufferedReader(new FileReader(fileBasal));
+        List<Float> valuesBasal = new ArrayList<Float>();
+        String value;
+        while (true) {
+        	value = buffRead.readLine();
+        	if (value == null) {
+            	break;
+            }
+            
+            valuesBasal.add(Float.parseFloat(value));
+        }
+        buffRead.close();
+        return valuesBasal;
+	}
+	
+	public void saveInsulinPump(Document doc) throws Exception{
+		Transformer xformer = TransformerFactory.newInstance().newTransformer();
+		xformer.setOutputProperty(OutputKeys.INDENT, "no");
+		xformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+		xformer.setOutputProperty(OutputKeys.METHOD, "xml");
+		
+		DOMImplementation domImpl = doc.getImplementation();
+		DocumentType doctype = domImpl.createDocumentType("doctype",
+		    "-//CPN//DTD CPNXML 1.0//EN",
+		    "http://cpntools.org/DTD/6/cpn.dtd");
+		xformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
+		xformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
+		xformer.transform(new DOMSource(doc), new StreamResult(new File(outputFileCPN)));
+	}
+	
+	public Document getDocumentInsulinPump() throws Exception{
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		builder = factory.newDocumentBuilder();
+		Document doc = builder.parse(inputFileCPN);
+		return doc;
+	}
 }
