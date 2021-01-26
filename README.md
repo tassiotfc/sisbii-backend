@@ -28,14 +28,14 @@ Sistema de Apoio ao Uso do Modelo de Referência para Sistemas de Bomba de Infus
 
 ## :rocket: Tecnologias
 
-Tecnologias usadas no curso:
+Tecnologias usadas no projeto:
 
 - [Java](https://www.java.com/pt_BR/)
 - [Spring](https://spring.io/)
 
 ## 💻 Projeto
 
-O SisBII é um sistema para manipulação de um modelo de referência para sistemas de bomba de infusão de insulina.
+O SisBII é um sistema para manipulação de um modelo de referência para sistemas de bomba de infusão de insulina feito com redes de Petri colorida.
 
 ## :memo: Licença
 
