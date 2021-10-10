@@ -3,11 +3,14 @@ package apisisbii.models.DAO;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -20,6 +23,9 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.ResourceUtils;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentType;
@@ -27,12 +33,49 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import apisisbii.ApirestApplication;
 import apisisbii.models.detailedinsulinpump.InsulinPumpDetailed;
 public class InsulinPumpDetailedDAO {
 	
-	public static final String inputFileCPN = "/home/tassio/1/Pump-AccuV2.cpn";
-	public static final String outputFileCPN = "/home/tassio/1/Pump-AccuV2.cpn";
-	public static final String fileBasal = "/home/tassio/1/BasalV2AC.txt";
+	private String inputFileCPN;
+	private String outputFileCPN;
+	private String fileBasal;
+	
+	public InsulinPumpDetailedDAO() {
+		configPathFileInsulinPump();
+		configPathFileBasal();
+	}
+	
+	public String getFileInputFileCPN() {
+		return inputFileCPN;
+	}
+	
+	public String getFileOutputFileCPN() {
+		return outputFileCPN;
+	}
+	
+	public String getFileBasal() {
+		return fileBasal;
+	}
+	
+	private void configPathFileInsulinPump(){
+	    try {
+	    	File file = ResourceUtils.getFile("classpath:PumpAccuV2.cpn");
+	        inputFileCPN = "" + file;
+	        outputFileCPN = inputFileCPN;
+	    } catch (IOException e) {
+	    	e.getMessage();
+	    }
+    }
+	
+	private void configPathFileBasal(){
+	    try {
+	    	File file = ResourceUtils.getFile("classpath:BasalV2AC.txt");
+	        fileBasal = "" + file;
+	    } catch (IOException e) {
+	    	e.getMessage();
+	    }
+    }
 	
 	public List<Float> getValueOfParametersInsulinPump(ArrayList<String> parametersName) throws Exception{	
 		List<Float> parametersValue = new ArrayList<Float>();

@@ -22,7 +22,7 @@ public class Simulator {
 	public Simulator(String inputFileCPN, String reportDirectory) {
 		try {
 			simulationMonitor = new SimulationMonitor();
-			PetriNet petriNet = DOMParser.parse(new URL("file://" + inputFileCPN));
+			PetriNet petriNet = DOMParser.parse(new URL("file://"+inputFileCPN));
 			s = HighLevelSimulator.getHighLevelSimulator();
 			s.setSimulationReportOptions(false, false, "");
 			final Checker checker = new Checker(petriNet, null, s);
@@ -49,10 +49,6 @@ public class Simulator {
 		return s.getAllPlaceInstances();
 	}
 	
-	public List<Instance<? extends Transition>> getAllTransitionsInstances() throws Exception{
-		return s.isEnabled(s.getAllTransitionInstances());
-	}
-	
 	public int getTimeAndConvertToInt() throws Exception{
 		return Integer.parseInt(s.getTime());
 	}
@@ -68,15 +64,6 @@ public class Simulator {
 			}
 		}
 		return "empty";
-	}
-	
-	public boolean allPlacesAreMarked(List<String> places) throws Exception {
-		for (String place : places) {
-			if(getPlaceMarking(place).contains("empty")) {
-				return false;
-			}
-		}
-		return true;
 	}
 	
 	public void enableTransitions(List<String> stopTransitions, List<String> exclusionTransitions) 
@@ -154,28 +141,14 @@ public class Simulator {
 		return tisEnabledThatCanFire;
 	}
 	
-	
-	
-	public Instance<? extends Transition> getEnabledTransition(String transicao) throws Exception{
-		List<Instance<? extends Transition>> tis = s.isEnabled(s.getAllTransitionInstances());
-		Instance<? extends Transition> ti = null;
-		for (Instance<? extends Transition> instance : tis) {
-			if(instance.toString().contains(transicao)) {
-				ti = instance;
-				return ti;
-			}
+	@SuppressWarnings("unchecked")
+	private List<Instance<Transition>> transitionsEnabledToExecutable
+	(List<Instance<? extends Transition>> tisEnabled) throws Exception{
+		List<Instance<Transition>> tisExecutable = new ArrayList<Instance<Transition>>();
+		for (Instance<? extends Transition> instance : tisEnabled) {
+			tisExecutable.add((Instance<Transition>) instance);
 		}
-		return ti;
-	}
-	
-	private List<String> transitionsEnabledToString(List<Instance<? extends Transition>> tis) 
-			throws IOException, Exception{
-		
-		List<String> transicoes = new ArrayList<String>();
-		for (Instance<? extends Transition> instance : tis) {
-			transicoes.add(instance.toString());
-		}
-		return transicoes;
+		return tisExecutable;
 	}
 	
 	public boolean fireTransitions(List<String> transitionsToFire) throws Exception{
@@ -195,14 +168,8 @@ public class Simulator {
 		return transitionsToFire.size() == count ? true : false;
 	}
 	
-	@SuppressWarnings("unchecked")
-	private List<Instance<Transition>> transitionsEnabledToExecutable
-	(List<Instance<? extends Transition>> tisEnabled) throws Exception{
-		List<Instance<Transition>> tisExecutable = new ArrayList<Instance<Transition>>();
-		for (Instance<? extends Transition> instance : tisEnabled) {
-			tisExecutable.add((Instance<Transition>) instance);
-		}
-		return tisExecutable;
+	private void configureLastTransitionFired(Instance<? extends Transition> transition) {
+		simulationMonitor.setLastTransitionFired(transition.toString());
 	}
 	
 	public boolean destroySimulator() {
@@ -234,24 +201,6 @@ public class Simulator {
 		return null;
 	}
 	
-	public Instance<? extends Transition> getTransition(String t, String binding) throws Exception{
-		List<Instance<? extends Transition>> transitions = new ArrayList<Instance<? extends Transition>>();
-		for (Instance<? extends Transition> instance : s.isEnabled(s.getAllTransitionInstances())) {
-			if(instance.toString().contains(t)) {
-				transitions.add(instance);
-			}
-		}
-		
-		for (Instance<? extends Transition> instance : transitions) {
-			for (Binding b: s.getBindings(instance)) {
-				if(b.toString().contains(binding)) {
-					return instance;
-				}
-			}
-		}
-		return null;
-	}
-	
 	public void executeBinding(Binding b) throws Exception{
 		s.execute(b);
 		configureEnabledTransitions();
@@ -263,8 +212,14 @@ public class Simulator {
 				s.isEnabled(s.getAllTransitionInstances())));
 	}
 	
-	private void configureLastTransitionFired(Instance<? extends Transition> transition) {
-		simulationMonitor.setLastTransitionFired(transition.toString());
+	private List<String> transitionsEnabledToString(List<Instance<? extends Transition>> tis) 
+			throws IOException, Exception{
+		
+		List<String> transicoes = new ArrayList<String>();
+		for (Instance<? extends Transition> instance : tis) {
+			transicoes.add(instance.toString());
+		}
+		return transicoes;
 	}
 	
 	private void configureLastTransitionFired(Binding binding) {

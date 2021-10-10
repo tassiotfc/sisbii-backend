@@ -16,14 +16,17 @@ public class InsulinPumpSimulator {
 	private Simulator simulator; 
 	
 	public InsulinPumpSimulator() throws Exception {
-		simulator = new Simulator(InsulinPumpDetailedDAO.inputFileCPN, reportDirectory);
+		InsulinPumpDetailedDAO insulinPumpDetailedDAO = new InsulinPumpDetailedDAO();
+		simulator = new Simulator(insulinPumpDetailedDAO.getFileInputFileCPN(), reportDirectory);
 	}
 	
 	public void createSimulationMonitor() throws Exception {
 		insulinPumpSM = new InsulinPumpSimulationMonitor();
-		
-		executeSimulation(Arrays.asList(new String[]{"System.Hardware.Start_Button"}),
-				Arrays.asList(), Arrays.asList());
+		InsulinPumpSimulationRestrictor simulationRestrictor = new InsulinPumpSimulationRestrictor();
+		simulationRestrictor.setStopTransitions(Arrays.asList(new String[]{"System.Hardware.Start_Button"}));
+		simulationRestrictor.setExclusionTransitions(Arrays.asList());
+		simulationRestrictor.setTransitionsToFire(Arrays.asList());
+		executeSimulation(simulationRestrictor);
 	}
 	
 	public void executeSimulation(InsulinPumpSimulationRestrictor simulationRestrictor) 

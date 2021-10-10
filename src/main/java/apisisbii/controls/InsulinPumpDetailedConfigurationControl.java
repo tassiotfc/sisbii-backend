@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +18,7 @@ import apisisbii.models.detailedinsulinpump.InsulinPumpDetailed;
 @RequestMapping(value="config")
 public class InsulinPumpDetailedConfigurationControl {
 	
+	@CrossOrigin
 	@GetMapping("/listparametersdetailed")
 	public InsulinPumpDetailed listParametersInsulinPumpDetailed() throws Exception {
 		InsulinPumpDetailedDAO insulinPumpDetailedDAO = new InsulinPumpDetailedDAO();
@@ -44,7 +46,8 @@ public class InsulinPumpDetailedConfigurationControl {
 				valuesBasal);
 		return insulinPumpDetailed;
 	}
-
+	
+	@CrossOrigin
 	@PostMapping("/updateparametersdetailed")
 	public boolean updateParametersDetailedInsulinPump(
 			@RequestBody InsulinPumpDetailed insulinPumpDetailed) throws Exception {
